@@ -196,13 +196,6 @@ function FloatingElement({
 
   const collapsing = phase === "exit" || phase === "hidden";
 
-  /**
-   * PENTING:
-   * - Jangan set top/left via framer motion (biar Tailwind finalPosition kepakai)
-   * - Motion cuma mainkan translate/opacity/scale
-   * - Start dari tengah = kasih translate offset besar, lalu animate ke 0
-   */
-
   return (
     <motion.div
       className={`absolute ${finalPosition} ${className || ""}`}
@@ -240,32 +233,35 @@ function FloatingElement({
   );
 }
 
-// ============= IMAGE DATA (dengan safe positioning) =============
-const floatingImages = [
+type FloatingMedia = {
+  type?: "image" | "video";
+  url: string;
+  position: string;
+  size: string;
+  depth: number;
+  z: string;
+  imgClassName?: string; // for image
+  mediaClassName?: string; // for image/video
+};
+
+// ============= IMAGE DATA =============
+const floatingImages: FloatingMedia[] = [
   {
-    url: "/images/logo-v2.png",
+    type: "image",
+    url: "/images/logowhite.png",
     position: "top-[10%] left-[6%]",
-    size: "w-20 h-20 md:w-24 md:h-24",
+    size: "w-28 h-28 md:w-36 md:h-36",
     depth: 0.5,
     z: "z-[1]",
   },
-  {
-    url: "/images/vinyl.png",
-    position: "top-[12%] left-[22%]",
-    size: "w-24 h-24 md:w-28 md:h-28",
-    depth: 1,
-    z: "z-[1]",
-  },
-  {
-    url: "/images/skate.png",
-    position: "top-[8%] left-[48%]",
-    size: "w-28 h-28 md:w-36 md:h-36",
-    depth: 2,
-    z: "z-[2]",
-  },
 
-  // kalau kamu masih butuh lebih banyak item (biar tetep 8),
-  // kamu bisa duplikat dengan posisi beda:
+  // {
+  //   url: "/images/vinyl.png",
+  //   position: "top-[12%] left-[22%]",
+  //   size: "w-24 h-24 md:w-28 md:h-28",
+  //   depth: 1,
+  //   z: "z-[1]",
+  // },
   {
     url: "/images/logo-v2.png",
     position: "top-[11%] right-[6%]",
@@ -274,47 +270,86 @@ const floatingImages = [
     z: "z-[1]",
   },
   {
-    url: "/images/vinyl.png",
+    url: "/images/octopus.png",
     position: "top-[48%] left-[4%]",
     size: "w-24 h-24 md:w-32 md:h-32",
     depth: 1,
     z: "z-[1]",
   },
   {
-    url: "/images/skate.png",
+    type: "video",
+    url: "/videos/skate.webm",
     position: "bottom-[14%] left-[12%]",
     size: "w-36 h-36 md:w-44 md:h-44",
     depth: 4,
     z: "z-[2]",
   },
   {
-    url: "/images/logo-v2.png",
-    position: "bottom-[16%] left-[48%]",
-    size: "w-28 h-28 md:w-36 md:h-36",
+    type: "image",
+    url: "/images/mice.png",
+    position: "bottom-[12%] left-[48%]",
+    size: "w-32 h-32 md:w-40 md:h-40",
     depth: 1,
-    z: "z-[1]",
+    z: "z-[1] animate-[floatSlow_6s_ease-in-out_infinite]",
   },
+
   {
-    url: "/images/vinyl.png",
+    type: "video",
+    url: "/videos/vinyl.webm",
     position: "bottom-[12%] right-[8%]",
     size: "w-32 h-32 md:w-40 md:h-40",
     depth: 2,
     z: "z-[2]",
+    mediaClassName: "object-contain scale-[1.35] origin-center",
+  },
+  // ===== MORE RIGHT SIDE ELEMENTS =====
+  {
+    type: "image",
+    url: "/images/goose.png",
+    position: "top-[22%] right-[14%]",
+    size: "w-36 h-36 md:w-48 md:h-48",
+    depth: 1.2,
+    z: "z-[1]",
   },
 ];
 
 // ============= FLOAT IMAGE COMPONENT =============
-interface FloatImgProps {
+interface FloatMediaProps {
   src: string;
+  type?: "image" | "video";
   className: string;
+  mediaClassName?: string;
 }
 
-function FloatImg({ src, className }: FloatImgProps) {
+function FloatMedia({
+  src,
+  type = "image",
+  className,
+  mediaClassName,
+}: FloatMediaProps) {
   return (
-    <div
-      className={`overflow-hidden rounded-2xl shadow-2xl ring-1 ring-white/10 ${className}`}
-    >
-      <img src={src} alt="" className="block w-full h-full object-cover" />
+    <div className={className}>
+      {type === "video" ? (
+        <video
+          src={src}
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="metadata"
+          className={`block w-full h-full ${
+            mediaClassName ?? "object-contain"
+          }`}
+        />
+      ) : (
+        <img
+          src={src}
+          alt=""
+          className={`block w-full h-full ${
+            mediaClassName ?? "object-contain"
+          }`}
+        />
+      )}
     </div>
   );
 }
@@ -376,18 +411,58 @@ export default function Preview() {
       <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center">
         {/* TEXT CENTER */}
         <div
-          className={`relative z-10 text-center space-y-4 items-center flex flex-col transition-all duration-900 ${
+          className={`relative z-10 text-center space-y-6 items-center flex flex-col transition-all duration-900 ${
             centerVisible
               ? "opacity-100 translate-y-0"
               : "opacity-0 translate-y-2"
           }`}
         >
-          <p className="text-6xl md:text-8xl text-white italic tracking-tight">
-            Uncu Wokrlabs.
+          {/* TITLE WRAPPER (ANCHOR) */}
+          <div className="relative inline-block">
+            {/* UFO ABOVE TITLE */}
+            <motion.div
+              className="absolute left-1/2 translate-x-[35%] -top-16 md:-top-20 z-20 pointer-events-none"
+              initial={{ opacity: 1, y: 0, scale: 1 }}
+              animate={
+                phase === "exit" || phase === "hidden"
+                  ? {
+                      opacity: 0,
+                      y: -18,
+                      scale: 0.92,
+                      transition: { duration: 0.55, ease: [0.32, 0, 0.67, 0] },
+                    }
+                  : {
+                      opacity: 1,
+                      y: 0,
+                      scale: 1,
+                      transition: { duration: 0.9, ease: [0.19, 1, 0.22, 1] },
+                    }
+              }
+            >
+              <img
+                src="/images/ufo.png"
+                alt=""
+                className="w-40 h-40 md:w-56 md:h-56 object-contain"
+              />
+            </motion.div>
+
+            {/* TITLE */}
+            <p className="text-6xl md:text-8xl text-white italic tracking-tight font-light">
+              Uncu Worklabs.
+            </p>
+          </div>
+
+          <p className="text-lg md:text-xl text-gray-400 max-w-2xl px-4">
+            TUNNING IDEAS FOR REAL RESULTS
           </p>
-          <button className="text-sm bg-white text-black rounded-full px-6 py-2 hover:scale-105 transition-transform">
-            Download
-          </button>
+          <div className="flex gap-4 mt-8">
+            <button className="text-sm bg-white text-black rounded-full px-8 py-3 hover:scale-105 hover:shadow-xl hover:shadow-white/20 transition-all duration-300 font-medium">
+              Contact Us
+            </button>
+            <button className="text-sm border border-white/30 text-white rounded-full px-8 py-3 hover:scale-105 hover:bg-white/10 hover:border-white/50 transition-all duration-300 font-medium">
+              Discover More
+            </button>
+          </div>
         </div>
 
         {/* FLOATING LAYER */}
@@ -404,13 +479,15 @@ export default function Preview() {
               finalPosition={image.position}
               index={index}
             >
-              <FloatImg src={image.url} className={image.size} />
+              <FloatMedia
+                src={image.url}
+                type={image.type}
+                className={image.size}
+                mediaClassName={image.mediaClassName}
+              />
             </FloatingElement>
           ))}
         </Floating>
-
-        {/* vignette biar aesthetic */}
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.05)_0%,rgba(0,0,0,0.9)_70%)]" />
       </div>
     </div>
   );
