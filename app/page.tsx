@@ -30,8 +30,27 @@ export default function Page() {
               <div className="absolute inset-0 pointer-events-none animate-fragile-broken bg-black/70 mix-blend-screen" />
             </div>
 
-            {/* RIGHT: text + cards */}
+            {/* RIGHT: video + text + cards */}
             <div className="text-white">
+              {/* VIDEO DI ATAS TEXT */}
+              <div className="relative -mt-32">
+                <video
+                  src="/videos/vinyl.webm"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  preload="auto"
+                  className="
+                    w-full
+                    h-auto
+                    object-contain
+                    opacity-100
+                    pointer-events-none
+                  "
+                />
+              </div>
+
               <p className="text-xs md:text-sm uppercase tracking-[0.5em] text-orange-400/90">
                 Astronomically Creative
               </p>

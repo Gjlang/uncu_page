@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useRef, useEffect, useState, useCallback } from "react";
 
 // Film grain generator class - PINDAH KE LUAR COMPONENT
@@ -531,18 +533,13 @@ export default function MusicReactiveHero() {
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
 
       <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-10 pointer-events-none">
-        <p className="text-sm tracking-widest mb-4 opacity-70">
-          Find yourself in the space between sounds
-        </p>
         <h1 className="text-6xl md:text-8xl font-bold text-center leading-tight">
-          <div>THE BEAUTY OF</div>
-          <div>NOISE</div>
+          <div>THE UNCU </div>
+          <div>WORKLABS</div>
         </h1>
         <p className="text-lg mt-6 opacity-80 max-w-2xl text-center px-4">
-          When you learn to see through the invisible, you experience the
-          impossible
+          TUNNING IDEAS FOR REAL RESULTS
         </p>
-        <p className="text-xs mt-4 opacity-60">Music by ARTIST NAME</p>
       </div>
 
       <button
@@ -556,28 +553,6 @@ export default function MusicReactiveHero() {
       >
         {isLoading ? "LOADING" : isPlaying ? "STOP" : "PLAY"}
       </button>
-
-      <div className="absolute bottom-16 left-0 right-0 h-1 bg-white/20 z-20">
-        <div
-          className="h-full bg-white transition-all duration-100"
-          style={{ width: `${audioProgress}%` }}
-        />
-      </div>
-
-      <div className="absolute top-8 right-8 text-white text-xs opacity-50 z-20">
-        <span>FPS: 60</span>
-      </div>
-
-      <div className="absolute bottom-8 left-8 flex items-center gap-4 text-white z-20">
-        <div className="w-12 h-12 bg-white/20 flex items-center justify-center text-xs font-bold">
-          ARTST
-        </div>
-        <div className="flex flex-col">
-          <span className="text-sm font-bold">ARTIST NAME</span>
-          <span className="text-xs opacity-60">@ARTIST</span>
-        </div>
-      </div>
-
       <audio
         ref={audioRef}
         src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3"
