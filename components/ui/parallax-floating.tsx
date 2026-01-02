@@ -13,6 +13,7 @@ import {
   useState,
 } from "react";
 import { useAnimationFrame, motion } from "framer-motion";
+import { Meteors } from "@/components/ui/meteors";
 
 // ============= CONSTANTS =============
 const SCROLL_THRESHOLD = 120; // px
@@ -270,46 +271,48 @@ const floatingImages: FloatingMedia[] = [
     z: "z-[1]",
   },
   {
-    url: "/images/octopus.png",
-    position: "top-[48%] left-[4%]",
-    size: "w-24 h-24 md:w-32 md:h-32",
-    depth: 1,
-    z: "z-[1]",
-  },
-  {
-    type: "video",
-    url: "/videos/skate.webm",
-    position: "bottom-[14%] left-[12%]",
-    size: "w-36 h-36 md:w-44 md:h-44",
-    depth: 4,
-    z: "z-[2]",
-  },
-  {
     type: "image",
     url: "/images/mice.png",
-    position: "bottom-[12%] left-[48%]",
-    size: "w-32 h-32 md:w-40 md:h-40",
+    position: "top-[37%] left-[10%]",
+    size: "w-[380px] h-[650px]",
     depth: 1,
     z: "z-[1] animate-[floatSlow_6s_ease-in-out_infinite]",
   },
+
+  // {
+  //   type: "video",
+  //   url: "/videos/skate.webm",
+  //   position: "bottom-[14%] left-[12%]",
+  //   size: "w-36 h-36 md:w-44 md:h-44",
+  //   depth: 4,
+  //   z: "z-[2]",
+  // },
+  // {
+  //   type: "image",
+  //   url: "/images/mice.png",
+  //   position: "bottom-[12%] left-[48%]",
+  //   size: "w-32 h-32 md:w-40 md:h-40",
+  //   depth: 1,
+  //   z: "z-[1] animate-[floatSlow_6s_ease-in-out_infinite]",
+  // },
 
   {
     type: "video",
     url: "/videos/vinyl.webm",
     position: "bottom-[12%] right-[8%]",
-    size: "w-32 h-32 md:w-40 md:h-40",
+    size: "w-[260px] h-[260px]",
     depth: 2,
     z: "z-[2]",
     mediaClassName: "object-contain scale-[1.35] origin-center",
   },
-  // ===== MORE RIGHT SIDE ELEMENTS =====
+
   {
     type: "image",
     url: "/images/goose.png",
-    position: "top-[22%] right-[14%]",
-    size: "w-36 h-36 md:w-48 md:h-48",
+    position: "top-[1%] right-[5%]",
+    size: "w-[300px] h-[250px]",
     depth: 1.2,
-    z: "z-[1]",
+    z: "z-[1] animate-[floatSlow_6s_ease-in-out_infinite]",
   },
 ];
 
@@ -408,7 +411,12 @@ export default function Preview() {
 
   return (
     <div className="relative min-h-[200vh] w-full bg-black">
-      <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center">
+      <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center relative">
+        {/* METEORS BG */}
+        <div className="pointer-events-none absolute inset-0 z-0">
+          <Meteors number={90} className="opacity-70" />
+        </div>
+
         {/* TEXT CENTER */}
         <div
           className={`relative z-10 text-center space-y-6 items-center flex flex-col transition-all duration-900 ${
@@ -421,20 +429,20 @@ export default function Preview() {
           <div className="relative inline-block">
             {/* UFO ABOVE TITLE */}
             <motion.div
-              className="absolute left-1/2 translate-x-[35%] -top-16 md:-top-20 z-20 pointer-events-none"
-              initial={{ opacity: 1, y: 0, scale: 1 }}
+              className="absolute left-1/2 translate-x-[35%] -top-20 md:-top-28 z-20 pointer-events-none"
+              initial={{ opacity: 1, y: 0, scale: 1.1 }}
               animate={
                 phase === "exit" || phase === "hidden"
                   ? {
                       opacity: 0,
-                      y: -18,
-                      scale: 0.92,
+                      y: -22,
+                      scale: 0.95,
                       transition: { duration: 0.55, ease: [0.32, 0, 0.67, 0] },
                     }
                   : {
                       opacity: 1,
                       y: 0,
-                      scale: 1,
+                      scale: 1.15,
                       transition: { duration: 0.9, ease: [0.19, 1, 0.22, 1] },
                     }
               }
@@ -442,18 +450,18 @@ export default function Preview() {
               <img
                 src="/images/ufo.png"
                 alt=""
-                className="w-40 h-40 md:w-56 md:h-56 object-contain"
+                className="w-56 h-56 md:w-72 md:h-72 object-contain"
               />
             </motion.div>
 
             {/* TITLE */}
-            <p className="text-6xl md:text-8xl text-white italic tracking-tight font-light">
+            <p className="text-7xl md:text-9xl lg:text-[9.5rem] text-white font-semibold tracking-tight leading-[1.05]">
               Uncu Worklabs.
             </p>
           </div>
 
-          <p className="text-lg md:text-xl text-gray-400 max-w-2xl px-4">
-            TUNNING IDEAS FOR REAL RESULTS
+          <p className="text-base md:text-lg font-medium uppercase tracking-widest text-gray-300 max-w-2xl px-4">
+            TUNING IDEAS FOR REAL RESULTS
           </p>
           <div className="flex gap-4 mt-8">
             <button className="text-sm bg-white text-black rounded-full px-8 py-3 hover:scale-105 hover:shadow-xl hover:shadow-white/20 transition-all duration-300 font-medium">
