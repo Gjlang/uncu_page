@@ -1,4 +1,5 @@
 import MusicReactiveHero from "@/components/music-reactive-hero-section";
+import { AnimatedSlideshowSection } from "@/components/animated-slideshow";
 
 export default function Page() {
   return (
@@ -16,41 +17,22 @@ export default function Page() {
                 src="/images/baliho.png"
                 alt="Baliho Visual"
                 className="
-                absolute inset-0
-                w-full h-full
-                object-contain
-                scale-115 md:scale-125
-                -translate-x-6 md:-translate-x-10
-                drop-shadow-[0_0_80px_rgba(255,200,120,0.25)]
-                drop-shadow-[0_0_140px_rgba(255,120,80,0.15)]
-              "
+                  absolute inset-0
+                  w-full h-full
+                  object-contain
+                  scale-115 md:scale-125
+                  -translate-x-6 md:-translate-x-10
+                  drop-shadow-[0_0_80px_rgba(255,200,120,0.25)]
+                  drop-shadow-[0_0_140px_rgba(255,120,80,0.15)]
+                "
               />
 
               {/* FRAGILE BROKEN LIGHT OVERLAY */}
               <div className="absolute inset-0 pointer-events-none animate-fragile-broken bg-black/70 mix-blend-screen" />
             </div>
 
-            {/* RIGHT: video + text + cards */}
+            {/* RIGHT: text + cards + vinyl UNDER */}
             <div className="text-white">
-              {/* VIDEO DI ATAS TEXT */}
-              <div className="relative -mt-32">
-                <video
-                  src="/videos/vinyl.webm"
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  preload="auto"
-                  className="
-                    w-full
-                    h-auto
-                    object-contain
-                    opacity-100
-                    pointer-events-none
-                  "
-                />
-              </div>
-
               <p className="text-xs md:text-sm uppercase tracking-[0.5em] text-orange-400/90">
                 Astronomically Creative
               </p>
@@ -66,6 +48,7 @@ export default function Page() {
                 product, and help bring it to the world.
               </p>
 
+              {/* BUTTONS */}
               <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <button className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-left hover:bg-white/10 transition">
                   <p className="text-sm font-semibold">Marketing</p>
@@ -77,10 +60,34 @@ export default function Page() {
                   <p className="text-sm font-semibold">Development</p>
                 </button>
               </div>
+
+              {/* VINYL UNDER THE BUTTONS */}
+              <div className="relative mt-10">
+                <video
+                  src="/videos/vinyl.webm"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  preload="auto"
+                  className="
+                    w-full
+                    max-w-md
+                    mx-auto
+                    h-auto
+                    object-contain
+                    opacity-100
+                    pointer-events-none
+                  "
+                />
+              </div>
             </div>
           </div>
         </div>
       </section>
+
+      {/* ✅ ANIMATED SLIDESHOW SECTION */}
+      <AnimatedSlideshowSection />
     </main>
   );
 }
