@@ -9,6 +9,7 @@ import {
 } from "motion/react";
 
 import React, { useRef, useState } from "react";
+import Image from "next/image";
 
 interface NavbarProps {
   children: React.ReactNode;
@@ -45,7 +46,7 @@ interface MobileNavMenuProps {
   children: React.ReactNode;
   className?: string;
   isOpen: boolean;
-  onClose: () => void;
+  onCloseAction: () => void;
 }
 
 export const Navbar = ({ children, className }: NavbarProps) => {
@@ -194,7 +195,7 @@ export const MobileNavMenu = ({
   children,
   className,
   isOpen,
-  onClose,
+  onCloseAction,
 }: MobileNavMenuProps) => {
   return (
     <AnimatePresence>
@@ -203,6 +204,10 @@ export const MobileNavMenu = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          onClickCapture={(e) => {
+            const el = e.target as HTMLElement;
+            if (el.closest("a")) onCloseAction();
+          }}
           className={cn(
             "absolute inset-x-0 top-16 z-50 flex w-full flex-col items-start justify-start gap-4 rounded-lg bg-white px-4 py-8 shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset] dark:bg-neutral-950",
             className
@@ -217,15 +222,15 @@ export const MobileNavMenu = ({
 
 export const MobileNavToggle = ({
   isOpen,
-  onClick,
+  onClickAction,
 }: {
   isOpen: boolean;
-  onClick: () => void;
+  onClickAction: () => void;
 }) => {
   return isOpen ? (
-    <IconX className="text-black dark:text-white" onClick={onClick} />
+    <IconX className="text-black dark:text-white" onClick={onClickAction} />
   ) : (
-    <IconMenu2 className="text-black dark:text-white" onClick={onClick} />
+    <IconMenu2 className="text-black dark:text-white" onClick={onClickAction} />
   );
 };
 
@@ -235,13 +240,15 @@ export const NavbarLogo = () => {
       href="#"
       className="relative z-20 mr-4 flex items-center gap-2 px-2 py-1 text-sm font-normal"
     >
-      <img
-        src="/images/logong.png"
-        alt="logo"
-        width={50}
-        height={50}
-        className="rounded-xl"
-      />
+      <div className="relative h-[50px] w-[50px]">
+        <Image
+          src="/images/logong.png"
+          alt="logo"
+          fill
+          className="rounded-xl object-contain"
+          priority
+        />
+      </div>
 
       <span className="font-medium text-black dark:text-white">
         Uncu Worklabs
@@ -250,27 +257,45 @@ export const NavbarLogo = () => {
   );
 };
 
-export const NavbarButton = ({
-  href,
-  as: Tag = "a",
+// ===== FIXED NavbarButton =====
+
+type NavbarButtonVariant = "primary" | "secondary" | "dark" | "gradient";
+
+type NavbarButtonBase = {
+  children: React.ReactNode;
+  className?: string;
+  variant?: NavbarButtonVariant;
+};
+
+type NavbarButtonAsLink = NavbarButtonBase & {
+  as?: "a";
+  href: string;
+} & Omit<
+    React.ComponentPropsWithoutRef<"a">,
+    "href" | "children" | "className"
+  >;
+
+type NavbarButtonAsButton = NavbarButtonBase & {
+  as: "button";
+} & Omit<React.ComponentPropsWithoutRef<"button">, "children" | "className">;
+
+// Function overloads untuk fix "children is never"
+export function NavbarButton(props: NavbarButtonAsLink): React.JSX.Element;
+export function NavbarButton(props: NavbarButtonAsButton): React.JSX.Element;
+
+export function NavbarButton({
+  as = "a",
   children,
   className,
   variant = "primary",
   ...props
-}: {
-  href?: string;
-  as?: React.ElementType;
-  children: React.ReactNode;
-  className?: string;
-  variant?: "primary" | "secondary" | "dark" | "gradient";
-} & (
-  | React.ComponentPropsWithoutRef<"a">
-  | React.ComponentPropsWithoutRef<"button">
-)) => {
+}: NavbarButtonAsLink | NavbarButtonAsButton) {
+  const Tag = as;
+
   const baseStyles =
     "px-4 py-2 rounded-md bg-white button bg-white text-black text-sm font-bold relative cursor-pointer hover:-translate-y-0.5 transition duration-200 inline-block text-center";
 
-  const variantStyles = {
+  const variantStyles: Record<NavbarButtonVariant, string> = {
     primary:
       "shadow-[0_0_24px_rgba(34,_42,_53,_0.06),_0_1px_1px_rgba(0,_0,_0,_0.05),_0_0_0_1px_rgba(34,_42,_53,_0.04),_0_0_4px_rgba(34,_42,_53,_0.08),_0_16px_68px_rgba(47,_48,_55,_0.05),_0_1px_0_rgba(255,_255,_255,_0.1)_inset]",
     secondary: "bg-transparent shadow-none dark:text-white",
@@ -279,13 +304,28 @@ export const NavbarButton = ({
       "bg-gradient-to-b from-blue-500 to-blue-700 text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset]",
   };
 
+  if (Tag === "a") {
+    const { href, ...linkProps } = props as NavbarButtonAsLink;
+    return (
+      <a
+        href={href}
+        className={cn(baseStyles, variantStyles[variant], className)}
+        {...linkProps}
+      >
+        {children}
+      </a>
+    );
+  }
+
   return (
-    <Tag
-      href={href || undefined}
+    <button
       className={cn(baseStyles, variantStyles[variant], className)}
-      {...props}
+      {...(props as Omit<
+        React.ComponentPropsWithoutRef<"button">,
+        "children" | "className"
+      >)}
     >
       {children}
-    </Tag>
+    </button>
   );
-};
+}

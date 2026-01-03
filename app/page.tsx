@@ -1,5 +1,8 @@
 import MusicReactiveHero from "@/components/music-reactive-hero-section";
 import { AnimatedSlideshowSection } from "@/components/animated-slideshow";
+import InfiniteGallery from "@/components/3d-gallery-photography";
+import { Footer } from "@/components/modem-animated-footer";
+import { Twitter, Linkedin, Github, Mail } from "lucide-react";
 
 export default function Page() {
   return (
@@ -86,8 +89,82 @@ export default function Page() {
         </div>
       </section>
 
-      {/* ✅ ANIMATED SLIDESHOW SECTION */}
+      {/* ANIMATED SLIDESHOW SECTION */}
       <AnimatedSlideshowSection />
+
+      {/* GALLERY SECTION */}
+      <section className="relative w-full bg-black py-32">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="relative h-[600px] w-full rounded-3xl overflow-hidden">
+            <InfiniteGallery
+              images={[
+                "/images/vinyl.png",
+                "/images/goose.png",
+                "/images/mice.png",
+                "/images/octopus.png",
+                "/images/baliho.png",
+                "/images/vinyl.png",
+                "/images/goose.png",
+                "/images/mice.png",
+              ]}
+              className="h-full w-full relative z-0"
+              speed={1}
+              visibleCount={12}
+              fadeSettings={{
+                fadeIn: { start: 0.05, end: 0.25 },
+                fadeOut: { start: 0.4, end: 0.43 },
+              }}
+              blurSettings={{
+                blurIn: { start: 0.0, end: 0.1 },
+                blurOut: { start: 0.4, end: 0.43 },
+                maxBlur: 8.0,
+              }}
+            />
+
+            <div className="absolute inset-0 z-10 pointer-events-none flex items-center justify-center text-center px-6">
+              <h1 className="font-serif text-4xl md:text-7xl tracking-tight text-white mix-blend-exclusion">
+                <span className="italic">I create;</span> therefore I am
+              </h1>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ✅ FOOTER */}
+      <Footer
+        brandName="UNCU"
+        brandDescription="Strategic design & engineering partner for bold digital brands."
+        socialLinks={[
+          {
+            icon: <Twitter className="w-6 h-6" />,
+            href: "https://twitter.com",
+            label: "Twitter",
+          },
+          {
+            icon: <Linkedin className="w-6 h-6" />,
+            href: "https://linkedin.com",
+            label: "LinkedIn",
+          },
+          {
+            icon: <Github className="w-6 h-6" />,
+            href: "https://github.com",
+            label: "GitHub",
+          },
+          {
+            icon: <Mail className="w-6 h-6" />,
+            href: "mailto:hello@uncu.com",
+            label: "Email",
+          },
+        ]}
+        navLinks={[
+          { label: "Home", href: "/" },
+          { label: "Work", href: "/work" },
+          { label: "Services", href: "/services" },
+          { label: "Contact", href: "/contact" },
+        ]}
+        creatorName="UNCU Worklabs"
+        creatorUrl="https://example.com"
+      />
     </main>
   );
 }
