@@ -539,16 +539,29 @@ export default function InfiniteGallery({
     maxBlur: 8.0,
   },
 }: InfiniteGalleryProps) {
-  const webglSupported = useMemo(() => {
+  const [webglSupported, setWebglSupported] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
     try {
       const canvas = document.createElement("canvas");
       const gl =
         canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
-      return !!gl;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (mounted) setWebglSupported(!!gl);
     } catch {
-      return false;
+      if (mounted) setWebglSupported(false);
     }
+
+    return () => {
+      mounted = false;
+    };
   }, []);
+
+  if (webglSupported === null) {
+    return <div className={className} style={style} />;
+  }
 
   if (!webglSupported) {
     return (
