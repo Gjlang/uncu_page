@@ -6,8 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff, Mail, Sparkles } from "lucide-react";
-import { cn } from "@/lib/utils";
-
 
 interface PupilProps {
   size?: number;
@@ -26,6 +24,7 @@ const Pupil = ({
 }: PupilProps) => {
   const [mouseX, setMouseX] = useState<number>(0);
   const [mouseY, setMouseY] = useState<number>(0);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
   const pupilRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -35,18 +34,17 @@ const Pupil = ({
     };
 
     window.addEventListener("mousemove", handleMouseMove);
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-    };
+    return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
-  const calculatePupilPosition = () => {
-    if (!pupilRef.current) return { x: 0, y: 0 };
+  // ✅ Calculate position in useEffect, not during render
+  useEffect(() => {
+    if (!pupilRef.current) return;
 
-    // If forced look direction is provided, use that instead of mouse tracking
     if (forceLookX !== undefined && forceLookY !== undefined) {
-      return { x: forceLookX, y: forceLookY };
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPosition({ x: forceLookX, y: forceLookY });
+      return;
     }
 
     const pupil = pupilRef.current.getBoundingClientRect();
@@ -61,10 +59,9 @@ const Pupil = ({
     const x = Math.cos(angle) * distance;
     const y = Math.sin(angle) * distance;
 
-    return { x, y };
-  };
-
-  const pupilPosition = calculatePupilPosition();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPosition({ x, y });
+  }, [mouseX, mouseY, maxDistance, forceLookX, forceLookY]);
 
   return (
     <div
@@ -74,15 +71,12 @@ const Pupil = ({
         width: `${size}px`,
         height: `${size}px`,
         backgroundColor: pupilColor,
-        transform: `translate(${pupilPosition.x}px, ${pupilPosition.y}px)`,
+        transform: `translate(${position.x}px, ${position.y}px)`,
         transition: 'transform 0.1s ease-out',
       }}
     />
   );
 };
-
-
-
 
 interface EyeBallProps {
   size?: number;
@@ -107,6 +101,7 @@ const EyeBall = ({
 }: EyeBallProps) => {
   const [mouseX, setMouseX] = useState<number>(0);
   const [mouseY, setMouseY] = useState<number>(0);
+  const [pupilPosition, setPupilPosition] = useState({ x: 0, y: 0 });
   const eyeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -116,18 +111,17 @@ const EyeBall = ({
     };
 
     window.addEventListener("mousemove", handleMouseMove);
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-    };
+    return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
-  const calculatePupilPosition = () => {
-    if (!eyeRef.current) return { x: 0, y: 0 };
+  // ✅ Calculate position in useEffect, not during render
+  useEffect(() => {
+    if (!eyeRef.current) return;
 
-    // If forced look direction is provided, use that instead of mouse tracking
     if (forceLookX !== undefined && forceLookY !== undefined) {
-      return { x: forceLookX, y: forceLookY };
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPupilPosition({ x: forceLookX, y: forceLookY });
+      return;
     }
 
     const eye = eyeRef.current.getBoundingClientRect();
@@ -142,10 +136,9 @@ const EyeBall = ({
     const x = Math.cos(angle) * distance;
     const y = Math.sin(angle) * distance;
 
-    return { x, y };
-  };
-
-  const pupilPosition = calculatePupilPosition();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPupilPosition({ x, y });
+  }, [mouseX, mouseY, maxDistance, forceLookX, forceLookY]);
 
   return (
     <div
@@ -174,10 +167,6 @@ const EyeBall = ({
   );
 };
 
-
-
-
-
 function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -191,6 +180,13 @@ function LoginPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [isLookingAtEachOther, setIsLookingAtEachOther] = useState(false);
   const [isPurplePeeking, setIsPurplePeeking] = useState(false);
+  
+  // ✅ State for character positions (not calculated during render)
+  const [purplePos, setPurplePos] = useState({ faceX: 0, faceY: 0, bodySkew: 0 });
+  const [blackPos, setBlackPos] = useState({ faceX: 0, faceY: 0, bodySkew: 0 });
+  const [yellowPos, setYellowPos] = useState({ faceX: 0, faceY: 0, bodySkew: 0 });
+  const [orangePos, setOrangePos] = useState({ faceX: 0, faceY: 0, bodySkew: 0 });
+  
   const purpleRef = useRef<HTMLDivElement>(null);
   const blackRef = useRef<HTMLDivElement>(null);
   const yellowRef = useRef<HTMLDivElement>(null);
@@ -206,60 +202,78 @@ function LoginPage() {
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
-  // Blinking effect for purple character
+  // ✅ Calculate positions in useEffect based on mouse position
   useEffect(() => {
-    const getRandomBlinkInterval = () => Math.random() * 4000 + 3000; // Random between 3-7 seconds
+    const calculatePosition = (ref: React.RefObject<HTMLDivElement | null>) => {
+      if (!ref.current) return { faceX: 0, faceY: 0, bodySkew: 0 };
 
+      const rect = ref.current.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 3;
+
+      const deltaX = mouseX - centerX;
+      const deltaY = mouseY - centerY;
+
+      const faceX = Math.max(-15, Math.min(15, deltaX / 20));
+      const faceY = Math.max(-10, Math.min(10, deltaY / 30));
+      const bodySkew = Math.max(-6, Math.min(6, -deltaX / 120));
+
+      return { faceX, faceY, bodySkew };
+    };
+
+    setPurplePos(calculatePosition(purpleRef));
+    setBlackPos(calculatePosition(blackRef));
+    setYellowPos(calculatePosition(yellowRef));
+    setOrangePos(calculatePosition(orangeRef));
+  }, [mouseX, mouseY]);
+
+  // Blinking effects
+  useEffect(() => {
+    const getRandomBlinkInterval = () => Math.random() * 4000 + 3000;
     const scheduleBlink = () => {
       const blinkTimeout = setTimeout(() => {
         setIsPurpleBlinking(true);
         setTimeout(() => {
           setIsPurpleBlinking(false);
           scheduleBlink();
-        }, 150); // Blink duration 150ms
+        }, 150);
       }, getRandomBlinkInterval());
-
       return blinkTimeout;
     };
-
     const timeout = scheduleBlink();
     return () => clearTimeout(timeout);
   }, []);
 
-  // Blinking effect for black character
   useEffect(() => {
-    const getRandomBlinkInterval = () => Math.random() * 4000 + 3000; // Random between 3-7 seconds
-
+    const getRandomBlinkInterval = () => Math.random() * 4000 + 3000;
     const scheduleBlink = () => {
       const blinkTimeout = setTimeout(() => {
         setIsBlackBlinking(true);
         setTimeout(() => {
           setIsBlackBlinking(false);
           scheduleBlink();
-        }, 150); // Blink duration 150ms
+        }, 150);
       }, getRandomBlinkInterval());
-
       return blinkTimeout;
     };
-
     const timeout = scheduleBlink();
     return () => clearTimeout(timeout);
   }, []);
 
-  // Looking at each other animation when typing starts
   useEffect(() => {
     if (isTyping) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsLookingAtEachOther(true);
       const timer = setTimeout(() => {
         setIsLookingAtEachOther(false);
-      }, 800); // Look at each other for 1.5 seconds, then back to tracking mouse
+      }, 800);
       return () => clearTimeout(timer);
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsLookingAtEachOther(false);
     }
   }, [isTyping]);
 
-  // Purple sneaky peeking animation when typing password and it's visible
   useEffect(() => {
     if (password.length > 0 && showPassword) {
       const schedulePeek = () => {
@@ -267,62 +281,29 @@ function LoginPage() {
           setIsPurplePeeking(true);
           setTimeout(() => {
             setIsPurplePeeking(false);
-          }, 800); // Peek for 800ms
-        }, Math.random() * 3000 + 2000); // Random peek every 2-5 seconds
+          }, 800);
+        }, Math.random() * 3000 + 2000);
         return peekInterval;
       };
-
       const firstPeek = schedulePeek();
       return () => clearTimeout(firstPeek);
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsPurplePeeking(false);
     }
   }, [password, showPassword, isPurplePeeking]);
-
-  const calculatePosition = (ref: React.RefObject<HTMLDivElement | null>) => {
-    if (!ref.current) return { faceX: 0, faceY: 0, bodyRotation: 0 };
-
-    const rect = ref.current.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 3; // Focus on head area
-
-    const deltaX = mouseX - centerX;
-    const deltaY = mouseY - centerY;
-
-    // Face movement (limited range)
-    const faceX = Math.max(-15, Math.min(15, deltaX / 20));
-    const faceY = Math.max(-10, Math.min(10, deltaY / 30));
-
-    // Body lean (skew for lean while keeping bottom straight) - negative to lean towards mouse
-    const bodySkew = Math.max(-6, Math.min(6, -deltaX / 120));
-
-    return { faceX, faceY, bodySkew };
-  };
-
-  const purplePos = calculatePosition(purpleRef);
-  const blackPos = calculatePosition(blackRef);
-  const yellowPos = calculatePosition(yellowRef);
-  const orangePos = calculatePosition(orangeRef);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
 
-    // Simulate API delay (quick)
     await new Promise(resolve => setTimeout(resolve, 300));
 
-    // Mock authentication - validate against dummy credentials
     if (email === "erik@gmail.com" && password === "1234") {
-      console.log("✅ Login successful!");
       alert("Login successful! Welcome, Erik!");
-      // In a real app, you would:
-      // - Store auth token
-      // - Redirect to dashboard
-      // - Set user session
     } else {
       setError("Invalid email or password. Please try again.");
-      console.log("❌ Login failed");
     }
 
     setIsLoading(false);
@@ -330,11 +311,10 @@ function LoginPage() {
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
-      {/* Left Content Section */}
-      <div className="relative hidden lg:flex flex-col justify-between bg-gradient-to-br from-primary/90 via-primary to-primary/80 p-12 text-primary-foreground">
+      <div className="relative hidden lg:flex flex-col justify-between bg-gradient-to-br from-purple-600/90 via-purple-600 to-purple-600/80 p-12 text-white">
         <div className="relative z-20">
           <div className="flex items-center gap-2 text-lg font-semibold">
-            <div className="size-8 rounded-lg bg-primary-foreground/10 backdrop-blur-sm flex items-center justify-center">
+            <div className="size-8 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center">
               <Sparkles className="size-4" />
             </div>
             <span>YourBrand</span>
@@ -342,9 +322,8 @@ function LoginPage() {
         </div>
 
         <div className="relative z-20 flex items-end justify-center h-[500px]">
-          {/* Cartoon Characters */}
           <div className="relative" style={{ width: '550px', height: '400px' }}>
-            {/* Purple tall rectangle character - Back layer */}
+            {/* Midnight Blue abstract character */}
             <div 
               ref={purpleRef}
               className="absolute bottom-0 transition-all duration-700 ease-in-out"
@@ -352,31 +331,32 @@ function LoginPage() {
                 left: '70px',
                 width: '180px',
                 height: (isTyping || (password.length > 0 && !showPassword)) ? '440px' : '400px',
-                backgroundColor: '#6C3FF5',
-                borderRadius: '10px 10px 0 0',
+                background: 'linear-gradient(135deg, #1a1a3e 0%, #0f0f2e 100%)',
+                borderRadius: '90px 90px 0 0',
+                clipPath: 'polygon(15% 0%, 85% 0%, 100% 100%, 0% 100%)',
                 zIndex: 1,
                 transform: (password.length > 0 && showPassword)
                   ? `skewX(0deg)`
                   : (isTyping || (password.length > 0 && !showPassword))
-                    ? `skewX(${(purplePos.bodySkew || 0) - 12}deg) translateX(40px)` 
-                    : `skewX(${purplePos.bodySkew || 0}deg)`,
+                    ? `skewX(${purplePos.bodySkew - 12}deg) translateX(40px)` 
+                    : `skewX(${purplePos.bodySkew}deg)`,
                 transformOrigin: 'bottom center',
+                boxShadow: '0 0 40px rgba(26, 26, 62, 0.6), inset 0 0 60px rgba(79, 70, 229, 0.1)',
               }}
             >
-              {/* Eyes */}
               <div 
                 className="absolute flex gap-8 transition-all duration-700 ease-in-out"
                 style={{
-                  left: (password.length > 0 && showPassword) ? `${20}px` : isLookingAtEachOther ? `${55}px` : `${45 + purplePos.faceX}px`,
-                  top: (password.length > 0 && showPassword) ? `${35}px` : isLookingAtEachOther ? `${65}px` : `${40 + purplePos.faceY}px`,
+                  left: (password.length > 0 && showPassword) ? `20px` : isLookingAtEachOther ? `55px` : `${45 + purplePos.faceX}px`,
+                  top: (password.length > 0 && showPassword) ? `35px` : isLookingAtEachOther ? `65px` : `${40 + purplePos.faceY}px`,
                 }}
               >
                 <EyeBall 
                   size={18} 
                   pupilSize={7} 
                   maxDistance={5} 
-                  eyeColor="white" 
-                  pupilColor="#2D2D2D" 
+                  eyeColor="#a5b4fc" 
+                  pupilColor="#4f46e5" 
                   isBlinking={isPurpleBlinking}
                   forceLookX={(password.length > 0 && showPassword) ? (isPurplePeeking ? 4 : -4) : isLookingAtEachOther ? 3 : undefined}
                   forceLookY={(password.length > 0 && showPassword) ? (isPurplePeeking ? 5 : -4) : isLookingAtEachOther ? 4 : undefined}
@@ -394,7 +374,7 @@ function LoginPage() {
               </div>
             </div>
 
-            {/* Black tall rectangle character - Middle layer */}
+            {/* Dark geometric character */}
             <div 
               ref={blackRef}
               className="absolute bottom-0 transition-all duration-700 ease-in-out"
@@ -402,33 +382,34 @@ function LoginPage() {
                 left: '240px',
                 width: '120px',
                 height: '310px',
-                backgroundColor: '#2D2D2D',
-                borderRadius: '8px 8px 0 0',
+                background: 'linear-gradient(180deg, #1f1f1f 0%, #0a0a0a 100%)',
+                borderRadius: '60px 60px 0 0',
+                clipPath: 'polygon(20% 0%, 80% 0%, 95% 100%, 5% 100%)',
                 zIndex: 2,
                 transform: (password.length > 0 && showPassword)
                   ? `skewX(0deg)`
                   : isLookingAtEachOther
-                    ? `skewX(${(blackPos.bodySkew || 0) * 1.5 + 10}deg) translateX(20px)`
+                    ? `skewX(${blackPos.bodySkew * 1.5 + 10}deg) translateX(20px)`
                     : (isTyping || (password.length > 0 && !showPassword))
-                      ? `skewX(${(blackPos.bodySkew || 0) * 1.5}deg)` 
-                      : `skewX(${blackPos.bodySkew || 0}deg)`,
+                      ? `skewX(${blackPos.bodySkew * 1.5}deg)` 
+                      : `skewX(${blackPos.bodySkew}deg)`,
                 transformOrigin: 'bottom center',
+                boxShadow: '0 0 30px rgba(0, 0, 0, 0.8), inset 0 0 40px rgba(255, 255, 255, 0.05)',
               }}
             >
-              {/* Eyes */}
               <div 
                 className="absolute flex gap-6 transition-all duration-700 ease-in-out"
                 style={{
-                  left: (password.length > 0 && showPassword) ? `${10}px` : isLookingAtEachOther ? `${32}px` : `${26 + blackPos.faceX}px`,
-                  top: (password.length > 0 && showPassword) ? `${28}px` : isLookingAtEachOther ? `${12}px` : `${32 + blackPos.faceY}px`,
+                  left: (password.length > 0 && showPassword) ? `10px` : isLookingAtEachOther ? `32px` : `${26 + blackPos.faceX}px`,
+                  top: (password.length > 0 && showPassword) ? `28px` : isLookingAtEachOther ? `12px` : `${32 + blackPos.faceY}px`,
                 }}
               >
                 <EyeBall 
                   size={16} 
                   pupilSize={6} 
                   maxDistance={4} 
-                  eyeColor="white" 
-                  pupilColor="#2D2D2D" 
+                  eyeColor="#d1d5db" 
+                  pupilColor="#374151" 
                   isBlinking={isBlackBlinking}
                   forceLookX={(password.length > 0 && showPassword) ? -4 : isLookingAtEachOther ? 0 : undefined}
                   forceLookY={(password.length > 0 && showPassword) ? -4 : isLookingAtEachOther ? -4 : undefined}
@@ -446,7 +427,7 @@ function LoginPage() {
               </div>
             </div>
 
-            {/* Orange semi-circle character - Front left */}
+            {/* Midnight Purple blob character */}
             <div 
               ref={orangeRef}
               className="absolute bottom-0 transition-all duration-700 ease-in-out"
@@ -455,26 +436,26 @@ function LoginPage() {
                 width: '240px',
                 height: '200px',
                 zIndex: 3,
-                backgroundColor: '#FF9B6B',
-                borderRadius: '120px 120px 0 0',
-                transform: (password.length > 0 && showPassword) ? `skewX(0deg)` : `skewX(${orangePos.bodySkew || 0}deg)`,
+                background: 'radial-gradient(circle at 30% 30%, #6b21a8 0%, #4c1d95 50%, #2e1065 100%)',
+                borderRadius: '50% 50% 0 0 / 100% 100% 0 0',
+                transform: (password.length > 0 && showPassword) ? `skewX(0deg)` : `skewX(${orangePos.bodySkew}deg)`,
                 transformOrigin: 'bottom center',
+                boxShadow: '0 0 50px rgba(107, 33, 168, 0.5), inset 0 -20px 40px rgba(139, 92, 246, 0.3)',
               }}
             >
-              {/* Eyes - just pupils, no white */}
               <div 
                 className="absolute flex gap-8 transition-all duration-200 ease-out"
                 style={{
-                  left: (password.length > 0 && showPassword) ? `${50}px` : `${82 + (orangePos.faceX || 0)}px`,
-                  top: (password.length > 0 && showPassword) ? `${85}px` : `${90 + (orangePos.faceY || 0)}px`,
+                  left: (password.length > 0 && showPassword) ? `50px` : `${82 + orangePos.faceX}px`,
+                  top: (password.length > 0 && showPassword) ? `85px` : `${90 + orangePos.faceY}px`,
                 }}
               >
-                <Pupil size={12} maxDistance={5} pupilColor="#2D2D2D" forceLookX={(password.length > 0 && showPassword) ? -5 : undefined} forceLookY={(password.length > 0 && showPassword) ? -4 : undefined} />
-                <Pupil size={12} maxDistance={5} pupilColor="#2D2D2D" forceLookX={(password.length > 0 && showPassword) ? -5 : undefined} forceLookY={(password.length > 0 && showPassword) ? -4 : undefined} />
+                <Pupil size={12} maxDistance={5} pupilColor="#a855f7" forceLookX={(password.length > 0 && showPassword) ? -5 : undefined} forceLookY={(password.length > 0 && showPassword) ? -4 : undefined} />
+                <Pupil size={12} maxDistance={5} pupilColor="#a855f7" forceLookX={(password.length > 0 && showPassword) ? -5 : undefined} forceLookY={(password.length > 0 && showPassword) ? -4 : undefined} />
               </div>
             </div>
 
-            {/* Yellow tall rectangle character - Front right */}
+            {/* Space Green crystal character */}
             <div 
               ref={yellowRef}
               className="absolute bottom-0 transition-all duration-700 ease-in-out"
@@ -482,73 +463,63 @@ function LoginPage() {
                 left: '310px',
                 width: '140px',
                 height: '230px',
-                backgroundColor: '#E8D754',
+                background: 'linear-gradient(165deg, #10b981 0%, #059669 40%, #047857 100%)',
                 borderRadius: '70px 70px 0 0',
+                clipPath: 'polygon(10% 0%, 90% 0%, 100% 85%, 85% 100%, 15% 100%, 0% 85%)',
                 zIndex: 4,
-                transform: (password.length > 0 && showPassword) ? `skewX(0deg)` : `skewX(${yellowPos.bodySkew || 0}deg)`,
+                transform: (password.length > 0 && showPassword) ? `skewX(0deg)` : `skewX(${yellowPos.bodySkew}deg)`,
                 transformOrigin: 'bottom center',
+                boxShadow: '0 0 40px rgba(16, 185, 129, 0.6), inset 0 0 50px rgba(52, 211, 153, 0.2)',
               }}
             >
-              {/* Eyes - just pupils, no white */}
               <div 
                 className="absolute flex gap-6 transition-all duration-200 ease-out"
                 style={{
-                  left: (password.length > 0 && showPassword) ? `${20}px` : `${52 + (yellowPos.faceX || 0)}px`,
-                  top: (password.length > 0 && showPassword) ? `${35}px` : `${40 + (yellowPos.faceY || 0)}px`,
+                  left: (password.length > 0 && showPassword) ? `20px` : `${52 + yellowPos.faceX}px`,
+                  top: (password.length > 0 && showPassword) ? `35px` : `${40 + yellowPos.faceY}px`,
                 }}
               >
-                <Pupil size={12} maxDistance={5} pupilColor="#2D2D2D" forceLookX={(password.length > 0 && showPassword) ? -5 : undefined} forceLookY={(password.length > 0 && showPassword) ? -4 : undefined} />
-                <Pupil size={12} maxDistance={5} pupilColor="#2D2D2D" forceLookX={(password.length > 0 && showPassword) ? -5 : undefined} forceLookY={(password.length > 0 && showPassword) ? -4 : undefined} />
+                <Pupil size={12} maxDistance={5} pupilColor="#065f46" forceLookX={(password.length > 0 && showPassword) ? -5 : undefined} forceLookY={(password.length > 0 && showPassword) ? -4 : undefined} />
+                <Pupil size={12} maxDistance={5} pupilColor="#065f46" forceLookX={(password.length > 0 && showPassword) ? -5 : undefined} forceLookY={(password.length > 0 && showPassword) ? -4 : undefined} />
               </div>
-              {/* Horizontal line for mouth */}
               <div 
                 className="absolute w-20 h-[4px] bg-[#2D2D2D] rounded-full transition-all duration-200 ease-out"
                 style={{
-                  left: (password.length > 0 && showPassword) ? `${10}px` : `${40 + (yellowPos.faceX || 0)}px`,
-                  top: (password.length > 0 && showPassword) ? `${88}px` : `${88 + (yellowPos.faceY || 0)}px`,
+                  left: (password.length > 0 && showPassword) ? `10px` : `${40 + yellowPos.faceX}px`,
+                  top: (password.length > 0 && showPassword) ? `88px` : `${88 + yellowPos.faceY}px`,
                 }}
               />
             </div>
           </div>
         </div>
 
-        <div className="relative z-20 flex items-center gap-8 text-sm text-primary-foreground/60">
-          <a href="#" className="hover:text-primary-foreground transition-colors">
-            Privacy Policy
-          </a>
-          <a href="#" className="hover:text-primary-foreground transition-colors">
-            Terms of Service
-          </a>
-          <a href="#" className="hover:text-primary-foreground transition-colors">
-            Contact
-          </a>
+        <div className="relative z-20 flex items-center gap-8 text-sm text-white/60">
+          <button onClick={() => {}} className="hover:text-white transition-colors">Privacy Policy</button>
+          <button onClick={() => {}} className="hover:text-white transition-colors">Terms of Service</button>
+          <button onClick={() => {}} className="hover:text-white transition-colors">Contact</button>
         </div>
 
-        {/* Decorative elements */}
         <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]" />
-        <div className="absolute top-1/4 right-1/4 size-64 bg-primary-foreground/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 left-1/4 size-96 bg-primary-foreground/5 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 right-1/4 size-64 bg-white/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 left-1/4 size-96 bg-white/5 rounded-full blur-3xl" />
       </div>
 
       {/* Right Login Section */}
-      <div className="flex items-center justify-center p-8 bg-background">
+      <div className="flex items-center justify-center p-8 bg-white">
         <div className="w-full max-w-[420px]">
-          {/* Mobile Logo */}
           <div className="lg:hidden flex items-center justify-center gap-2 text-lg font-semibold mb-12">
-            <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Sparkles className="size-4 text-primary" />
+            <div className="size-8 rounded-lg bg-purple-600/10 flex items-center justify-center">
+              <Sparkles className="size-4 text-purple-600" />
             </div>
             <span>YourBrand</span>
           </div>
 
-          {/* Header */}
           <div className="text-center mb-10">
             <h1 className="text-3xl font-bold tracking-tight mb-2">Welcome back!</h1>
-            <p className="text-muted-foreground text-sm">Please enter your details</p>
+            <p className="text-gray-600 text-sm">Please enter your details</p>
           </div>
 
-          {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium">Email</Label>
               <Input
@@ -561,7 +532,7 @@ function LoginPage() {
                 onFocus={() => setIsTyping(true)}
                 onBlur={() => setIsTyping(false)}
                 required
-                className="h-12 bg-background border-border/60 focus:border-primary"
+                className="h-12 bg-white border-gray-300 focus:border-purple-600"
               />
             </div>
 
@@ -575,18 +546,14 @@ function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="h-12 pr-10 bg-background border-border/60 focus:border-primary"
+                  className="h-12 pr-10 bg-white border-gray-300 focus:border-purple-600"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-900 transition-colors"
                 >
-                  {showPassword ? (
-                    <EyeOff className="size-5" />
-                  ) : (
-                    <Eye className="size-5" />
-                  )}
+                  {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
                 </button>
               </div>
             </div>
@@ -594,55 +561,47 @@ function LoginPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Checkbox id="remember" />
-                <Label
-                  htmlFor="remember"
-                  className="text-sm font-normal cursor-pointer"
-                >
+                <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
                   Remember for 30 days
                 </Label>
               </div>
-              <a
-                href="#"
-                className="text-sm text-primary hover:underline font-medium"
-              >
+              <button onClick={() => {}} className="text-sm text-purple-600 hover:underline font-medium">
                 Forgot password?
-              </a>
+              </button>
             </div>
 
             {error && (
-              <div className="p-3 text-sm text-red-400 bg-red-950/20 border border-red-900/30 rounded-lg">
+              <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg">
                 {error}
               </div>
             )}
 
             <Button 
-              type="submit" 
-              className="w-full h-12 text-base font-medium" 
+              onClick={handleSubmit}
+              className="w-full h-12 text-base font-medium bg-purple-600 hover:bg-purple-700" 
               size="lg" 
               disabled={isLoading}
             >
               {isLoading ? "Signing in..." : "Log in"}
             </Button>
-          </form>
+          </div>
 
-          {/* Social Login */}
           <div className="mt-6">
             <Button 
               variant="outline" 
-              className="w-full h-12 bg-background border-border/60 hover:bg-accent"
-              type="button"
+              className="w-full h-12 bg-white border-gray-300 hover:bg-gray-50"
+              onClick={() => {}}
             >
               <Mail className="mr-2 size-5" />
               Log in with Google
             </Button>
           </div>
 
-          {/* Sign Up Link */}
-          <div className="text-center text-sm text-muted-foreground mt-8">
-            Don't have an account?{" "}
-            <a href="#" className="text-foreground font-medium hover:underline">
+          <div className="text-center text-sm text-gray-600 mt-8">
+            Don&apos;t have an account?{" "}
+            <button onClick={() => {}} className="text-gray-900 font-medium hover:underline">
               Sign Up
-            </a>
+            </button>
           </div>
         </div>
       </div>
@@ -650,6 +609,4 @@ function LoginPage() {
   );
 }
 
-
-
-export const Component = LoginPage;
+export default LoginPage;

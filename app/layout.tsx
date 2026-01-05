@@ -40,16 +40,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black text-white`}
       >
-        {/* ✅ FLOATING NAVBAR (not stuck to top) */}
         <Navbar className="fixed inset-x-0 top-6 z-[100]">
           <NavBody>
             <NavbarLogo />
             <NavItems items={navItems} />
 
-            {/* ✅ 2 BUTTONS */}
             <div className="relative z-20 flex items-center gap-2">
               <NavbarButton
-                href="/work"
+                href="/login"
                 variant="secondary"
                 className="text-white"
               >
@@ -57,13 +55,12 @@ export default function RootLayout({
               </NavbarButton>
 
               <NavbarButton href="/contact" variant="dark">
-                Let’s talk
+                Lets talk
               </NavbarButton>
             </div>
           </NavBody>
         </Navbar>
 
-        {/* ✅ push content down so hero not covered */}
         <div className="pt-32">{children}</div>
       </body>
     </html>
